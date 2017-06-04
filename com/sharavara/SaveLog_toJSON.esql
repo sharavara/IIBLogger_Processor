@@ -1,0 +1,44 @@
+BROKER SCHEMA com.sharavara
+
+DECLARE ESURL EXTERNAL CHARACTER '';
+DECLARE ES_CREDENTIALS EXTERNAL CHARACTER '';
+
+CREATE COMPUTE MODULE SaveLog_toJSON
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		
+		DECLARE URL CHARACTER ESURL || LCASE(BrokerName) || CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT '-yyyyMM');
+		SET OutputLocalEnvironment.Destination.HTTP.RequestURL = URL || '/log/' ;
+		SET OutputRoot.HTTPRequestHeader."Authorization" = 'Basic ' || ES_CREDENTIALS; 
+		--JSON data
+		SET OutputRoot.JSON.Data.BrokerName = InputRoot.MQRFH2.usr.vs.BrokerName;
+		SET OutputRoot.JSON.Data.QueueManagerName = InputRoot.MQRFH2.usr.vs.QueueManagerName;
+		SET OutputRoot.JSON.Data.ExecutionGroupLabel = InputRoot.MQRFH2.usr.vs.ExecutionGroupLabel;
+		SET OutputRoot.JSON.Data.ApplicationLabel = InputRoot.MQRFH2.usr.vs.ApplicationLabel;
+		SET OutputRoot.JSON.Data.MessageFlowLabel = InputRoot.MQRFH2.usr.vs.MessageFlowLabel;
+		SET OutputRoot.JSON.Data.MsgID = InputRoot.MQRFH2.usr.vs.MsgID;
+		SET OutputRoot.JSON.Data.CorrelId = InputRoot.MQRFH2.usr.vs.CorrelId;
+		SET OutputRoot.JSON.Data.Timestamp = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'I'); 
+		SET OutputRoot.JSON.Data.ExceptionTimestamp = InputRoot.MQRFH2.usr.vs.Timestamp;
+		SET OutputRoot.JSON.Data.Exception = InputRoot.MQRFH2.usr.vs.Exception;
+		SET OutputRoot.JSON.Data.ExceptionNumber = InputRoot.MQRFH2.usr.vs.ExceptionNumber;
+		SET OutputRoot.JSON.Data.ExceptionText = InputRoot.MQRFH2.usr.vs.ExceptionText;
+		SET OutputRoot.JSON.Data.LocalEnvironment = InputRoot.MQRFH2.usr.vs.LocalEnvironment;
+		SET OutputRoot.JSON.Data.Environment = InputRoot.MQRFH2.usr.vs.Environment;
+		SET OutputRoot.JSON.Data.Properties = InputRoot.MQRFH2.usr.vs.Properties;
+		SET OutputRoot.JSON.Data.MQMD = InputRoot.MQRFH2.usr.vs.MQMD;
+		SET OutputRoot.JSON.Data.HTTPInputHeader = InputRoot.MQRFH2.usr.vs.HTTPInputHeader;
+		SET OutputRoot.JSON.Data.HTTPReplyHeader = InputRoot.MQRFH2.usr.vs.HTTPReplyHeader;
+		SET OutputRoot.JSON.Data.HTTPRequestHeader = InputRoot.MQRFH2.usr.vs.HTTPRequestHeader;
+		SET OutputRoot.JSON.Data.HTTPResponseHeader = InputRoot.MQRFH2.usr.vs.HTTPResponseHeader;
+		-- Email settings
+		IF InputRoot.MQRFH2.usr.set.Emails <> '' THEN
+			SET Environment.Variables.VS.Email = InputRoot.MQRFH2.usr.set.Emails; 
+			SET Environment.Variables.VS.BrokerName =  InputRoot.MQRFH2.usr.vs.BrokerName;
+			SET Environment.Variables.VS.ApplicationLabel = InputRoot.MQRFH2.usr.vs.ApplicationLabel;
+		END IF;
+
+		RETURN TRUE;
+	END;
+
+END MODULE;

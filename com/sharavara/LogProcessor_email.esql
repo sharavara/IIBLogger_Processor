@@ -1,0 +1,21 @@
+BROKER SCHEMA com.sharavara
+DECLARE KIURL EXTERNAL CHARACTER '';
+
+CREATE COMPUTE MODULE LogProcessor_email
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.Variables.VS.Emails = '' THEN
+			RETURN FALSE;
+		END IF;
+		
+		SET OutputRoot.Properties.Encoding = 1208;
+		SET OutputRoot.EmailOutputHeader.To = Environment.Variables.VS.Email;
+		SET OutputRoot.EmailOutputHeader.Subject =  'EXEPTION' || ' | ' || UPPER(Environment.Variables.VS.BrokerName) || ' | ' || Environment.Variables.VS.ApplicationLabel ; 
+		DECLARE url CHARACTER KIURL || LOWER(SQL.BrokerName) || '-*' ;
+		SET url = url || InputRoot.HTTPResponseHeader.Location;
+	 	SET OutputRoot.BLOB.BLOB = CAST('See the details of the exeption by this link: ' || url AS BLOB CCSID 1208);         
+		
+		RETURN TRUE;
+	END;
+
+END MODULE;
